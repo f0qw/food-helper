@@ -42,3 +42,7 @@ func (s *DishService) DeleteDish(name string) error {
 func (s *DishService) OrderDish(name string) (*models.Dish, error) {
 	return s.DishDAO.GetDishByName(name)
 }
+
+func (s *DishService) GetDishByName(name string) (*models.Dish, error) {
+	return s.DishDAO.GetDishByName(name)
+}

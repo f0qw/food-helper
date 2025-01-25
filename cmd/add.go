@@ -29,8 +29,13 @@ func NewAddCmd(dishService *services.DishService) *cobra.Command {
 				fmt.Println("食材、价格、和度量的数量必须相同")
 				return
 			}
+			_, err := dishService.GetDishByName(dishName)
+			if err == nil {
+				fmt.Println("该菜品已经存在，请重新添加！")
+				return
+			}
 
-			err := dishService.AddDish(dishName, elements, price, num)
+			err = dishService.AddDish(dishName, elements, price, num)
 			if err != nil {
 				fmt.Println("添加菜名失败:%v", err)
 				return
