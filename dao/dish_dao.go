@@ -32,3 +32,9 @@ func (dao *DishDAO) GetDishByName(name string) (*models.Dish, error) {
 func (dao *DishDAO) DeleteDish(dish *models.Dish) error {
 	return dao.DB.Delete(dish).Error
 }
+
+func (dao *DishDAO) GetDishByID(id string) (*models.Dish, error) {
+	var dish models.Dish
+	err := dao.DB.Preload("Elements").First(&dish, "id = ?", id).Error
+	return &dish, err
+}

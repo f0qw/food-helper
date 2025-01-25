@@ -46,3 +46,7 @@ func (s *DishService) OrderDish(name string) (*models.Dish, error) {
 func (s *DishService) GetDishByName(name string) (*models.Dish, error) {
 	return s.DishDAO.GetDishByName(name)
 }
+
+func (s *DishService) GetDishByID(id string) (*models.Dish, error) {
+	return s.DishDAO.GetDishByID(id)
+}

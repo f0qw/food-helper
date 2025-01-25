@@ -26,7 +26,7 @@ func NewAddCmd(dishService *services.DishService) *cobra.Command {
 			dishName := args[0]
 
 			if len(elements) != len(price) || len(elements) != len(num) {
-				fmt.Println("食材、价格、和度量的数量必须相同")
+				fmt.Println("食材、价格、和度量的数量必须相同，同时注意需要使用英文下的逗号")
 				return
 			}
 			_, err := dishService.GetDishByName(dishName)
@@ -41,7 +41,7 @@ func NewAddCmd(dishService *services.DishService) *cobra.Command {
 				return
 			}
 
-			fmt.Printf("添加菜名：%s\n", dishName)
+			fmt.Printf("添加菜名：%s \n", dishName)
 			table := tablewriter.NewWriter(os.Stdout)
 			table.SetHeader([]string{"食材", "度量", "价格"})
 

@@ -18,6 +18,7 @@ func Execute(dishService *services.DishService) {
 	listCmd := NewListCmd(dishService)
 	deleteCmd := NewDeleteCmd(dishService)
 	orderCmd := NewOrderCmd(dishService)
+	//orderCmd.Flags().StringSliceVarP(&orderNums,"n","n",[]string{},"菜单编号")
 
 	rootCmd.AddCommand(addCmd, listCmd, deleteCmd, orderCmd)
 	if err := rootCmd.Execute(); err != nil {
