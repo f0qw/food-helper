@@ -9,7 +9,8 @@ import (
 
 func main() {
 	// food-helper dish -name "菜名1" -elements "食材1 50g"
-	// food-helper  -name "菜名1" -
+	// food-helper  -name "菜名1"
+	// TODO: 改成http形式
 
 	db, err := config.InitDB()
 	if err != nil {
