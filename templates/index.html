@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>美食管理系统 | Food Helper</title>
+    <style>
+        :root {
+            --primary-color: #ff6b6b;
+            --secondary-color: #4ecdc4;
+            --background: #f8f9fa;
+            --text-color: #2d3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', '微软雅黑', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background: var(--background);
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin: 0;
+            position: relative;
+            display: inline-block;
+        }
+
+        .header h1::after {
+            content: '';
+            display: block;
+            width: 60%;
+            height: 3px;
+            background: var(--secondary-color);
+            margin: 0.5rem auto;
+        }
+
+        /* 添加菜品表单 */
+        .form-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .form-section h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-input {
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+
+        /* 食材输入组 */
+        .element-group {
+            display: grid;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .element-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ff4757;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* 菜品卡片 - 每行显示3个 */
+        .dish-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            padding: 1rem;
+        }
+
+        /* 响应式布局 */
+        @media (max-width: 992px) {
+            .dish-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dish-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 调整卡片高度统一 */
+        .dish-card {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dish-image {
+            height: 250px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .dish-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.5rem;
+        }
+
+        .dish-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .dish-card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* 优化图片显示 */
+        .dish-image {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-bottom: 3px solid var(--secondary-color);
+            background: #f0f0f0;
+            padding: 10px;
+        }
+
+        /* 美化操作控件 */
+        /* 优化操作按钮组布局 */
+        .action-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .action-group .btn {
+            white-space: nowrap;
+            padding: 0.6rem 1rem;
+            flex-shrink: 0;
+        }
+
+        .custom-checkbox label {
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .custom-checkbox {
+            position: relative;
+            display: inline-block;
+        }
+
+        .custom-checkbox input {
+            opacity: 0;
+            position: absolute;
+        }
+
+        .custom-checkbox label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            background: #f0f0f0;
+            transition: all 0.3s ease;
+        }
+
+        .custom-checkbox input:checked + label {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .custom-checkbox label::before {
+            content: '';
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .custom-checkbox input:checked + label::before {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .dish-content {
+            padding: 1.5rem;
+        }
+
+        .dish-title {
+            margin: 0 0 1rem;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .ingredient-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1rem;
+        }
+
+        .ingredient-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .action-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        /* 订单窗口样式 */
+        .order-window {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header class="header">
+        <h1>美食工坊 🍳</h1>
+    </header>
+
+    <!-- 添加菜品表单 -->
+    <section class="form-section">
+        <h2>✨ 添加新菜品</h2>
+        <form id="addForm">
+            <div class="form-grid">
+                <input type="text" name="name" class="form-input" placeholder="菜品名称" required>
+                <input type="url" name="image_url" class="form-input" placeholder="图片URL" required>
+            </div>
+
+            <div id="elements">
+                <div class="element-group">
+                    <div class="element-item">
+                        <input type="text" class="form-input" name="elementName" placeholder="食材名称" required>
+                        <input type="text" class="form-input" name="quantity" placeholder="分量" required>
+                        <input type="text" class="form-input" name="price" placeholder="价格" required>
+                        <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-group">
+                <button type="button" class="btn btn-secondary" onclick="addElement()">➕ 添加食材</button>
+                <button type="submit" class="btn btn-primary">🚀 提交菜品</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- 菜品展示区 -->
+    <section id="dishList"></section>
+
+    <!-- 下单按钮 -->
+    <div class="action-group" style="justify-content: center; margin: 3rem 0;">
+        <button class="btn btn-primary" onclick="placeOrder()" style="padding: 1rem 3rem;">
+            🛒 立即下单
+        </button>
+    </div>
+</div>
+
+<script>
+    // 保持原有JavaScript功能不变，仅调整交互提示样式
+    // 在成功提示处添加emoji和样式
+    const showSuccess = (msg) => {
+        const toast = document.createElement('div');
+        toast.style = `position: fixed; top: 20px; right: 20px; padding: 1rem; background: #4CAF50; color: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);`;
+        toast.innerHTML = `✅ ${msg}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // 修改原有alert调用为showSuccess
+    document.getElementById('addForm').onsubmit = async (e) => {
+        // ...原有逻辑...
+        if (response.ok) {
+            showSuccess('菜品添加成功！');
+            window.location.reload();
+        }
+    }
+
+    // 页面加载时获取菜品列表
+    window.onload = async () => {
+        const response = await fetch('/dishes');
+        const { data } = await response.json();
+        renderDishes(data);
+    };
+
+    // 渲染菜品列表 - 横向三列布局
+    function renderDishes(dishes) {
+        const container = document.getElementById('dishList');
+        container.innerHTML = `
+      <div class="dish-grid">
+        ${dishes.map(dish => `
+          <div class="dish-card" data-id="${dish.id}" data-name="${dish.name}" data-image="${dish.image_url}">
+            ${dish.image_url ? `<img src="${dish.image_url}" class="dish-image" alt="${dish.name}">` : ''}
+            <div class="dish-content">
+              <h3 class="dish-title">${dish.name}</h3>
+              <ul class="ingredient-list">
+                ${dish.elements.map(element => `
+                  <li class="ingredient-item">
+                    <span>${element.name}</span>
+                    <span>${element.quantity} (${element.price})</span>
+                  </li>
+                `).join('')}
+              </ul>
+              <div class="action-group">
+                <button class="btn btn-secondary" onclick="editDish('${dish.id}')">✏️ 编辑</button>
+                <button class="btn btn-danger" onclick="deleteDish('${dish.id}')">🗑️ 删除</button>
+                <div class="custom-checkbox">
+                  <input type="checkbox" class="order-check" value="${dish.id}" id="check-${dish.id}">
+                  <label for="check-${dish.id}">📝 下单</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    }
+
+    // 添加食材输入框 - 美化版
+    function addElement() {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'element-group';
+
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'element-item';
+
+        itemDiv.innerHTML = `
+        <input type="text" class="form-input" name="elementName" placeholder="食材名称" required>
+        <input type="text" class="form-input" name="quantity" placeholder="分量" required>
+        <input type="text" class="form-input" name="price" placeholder="价格" required>
+        <button type="button" class="btn btn-danger"
+                onclick="this.parentElement.parentElement.remove()"
+                title="删除食材">
+            ×
+        </button>
+    `;
+
+        groupDiv.appendChild(itemDiv);
+        document.getElementById('elements').appendChild(groupDiv);
+    }
+    // 提交新菜品
+    document.getElementById('addForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const elements = [];
+
+        document.querySelectorAll('#elements .element').forEach(el => {
+            elements.push({
+                name: el.querySelector('[name="elementName"]').value,
+                quantity: el.querySelector('[name="quantity"]').value,
+                price: el.querySelector('[name="price"]').value
+            });
+        });
+
+        const response = await fetch('/dishes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: formData.get('name'),
+                image_url: formData.get('image_url'),
+                elements: elements
+            })
+        });
+
+        if (response.ok) {
+            alert('添加成功');
+            window.location.reload();
+        }
+    };
+
+    // 删除菜品
+    async function deleteDish(id) {
+        if (confirm('确定要删除吗？')) {
+            await fetch(`/dishes/${id}`, { method: 'DELETE' });
+            window.location.reload();
+        }
+    }
+
+    // 下单功能
+    async function placeOrder() {
+        const selected = Array.from(document.querySelectorAll('.order-check:checked'))
+            .map(checkbox => checkbox.value);
+
+        if (selected.length === 0) {
+            alert('请选择要下单的菜品');
+            return;
+        }
+
+        const response = await fetch('/dishes/order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dish_ids: selected })
+        });
+
+        const { data } = await response.json();
+        showOrderResult(data);
+    }
+
+    // 显示下单结果 - 美化版
+    function showOrderResult(order) {
+        const newWindow = window.open('', '_blank', 'width=600,height=800');
+        newWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>订单详情 - 美食工坊</title>
+            <style>
+                ${document.querySelector('style').innerHTML}
+
+                /* 订单专属样式 */
+                .order-container {
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding: 2rem;
+                }
+
+                .order-header {
+                    text-align: center;
+                    margin-bottom: 2rem;
+                    position: relative;
+                }
+
+                .order-header h1 {
+                    color: var(--primary-color);
+                    font-size: 2rem;
+                    margin-bottom: 1rem;
+                }
+
+                .total-price {
+                    font-size: 1.5rem;
+                    color: var(--secondary-color);
+                    font-weight: bold;
+                    text-align: center;
+                    padding: 1rem;
+                    background: #f8f9fa;
+                    border-radius: 12px;
+                    margin: 2rem 0;
+                }
+
+                .ingredient-detail {
+                    background: white;
+                    padding: 2rem;
+                    border-radius: 12px;
+                    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+                }
+
+                .ingredient-item {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 1rem;
+                    border-bottom: 1px solid #eee;
+                    transition: background 0.3s ease;
+                }
+
+                .ingredient-item:hover {
+                    background: #f8f9fa;
+                }
+
+                .ingredient-name {
+                    font-weight: 600;
+                    color: var(--text-color);
+                }
+
+                .ingredient-values {
+                    color: #666;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="order-container">
+                <div class="order-header">
+                    <h1>🍱 订单详情</h1>
+                    <div class="total-price">
+                        总计：¥${order.total_price.toFixed(2)}
+                    </div>
+                </div>
+
+                <div class="ingredient-detail">
+                    <h3>📦 食材明细</h3>
+                    <div class="ingredient-list">
+                        ${order.details.map(item => `
+                            <div class="ingredient-item">
+                                <span class="ingredient-name">${item.ingredient}</span>
+                                <span class="ingredient-values">
+                                    数量：${item.quantity.toFixed(2)}
+                                    | 价格：¥${item.price.toFixed(2)}
+                                </span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+    `);
+    }
+
+    // 编辑菜品功能
+    async function editDish(id) {
+        // 从已加载的列表数据中获取菜品详情
+        const dishCard = document.querySelector(`.dish-card[data-id="${id}"]`);
+        const data = {
+            name: dishCard.querySelector('.dish-title').textContent,
+            image_url: dishCard.querySelector('.dish-image')?.src || '',
+            elements: Array.from(dishCard.querySelectorAll('.ingredient-item')).map(item => ({
+                name: item.querySelector('span:first-child').textContent,
+                quantity: item.querySelector('span:last-child').textContent.split(' ')[0],
+                price: item.querySelector('span:last-child').textContent.match(/\((.*?)\)/)[1]
+            }))
+        };
+
+        // 填充表单数据
+        const form = document.getElementById('addForm');
+        form.querySelector('[name="name"]').value = data.name;
+        form.querySelector('[name="image_url"]').value = data.image_url;
+
+        // 清空现有食材输入
+        document.getElementById('elements').innerHTML = '';
+
+        // 填充食材信息
+        data.elements.forEach(element => {
+            addElement(); // 添加新输入框
+            const lastGroup = document.querySelector('#elements .element-group:last-child');
+            lastGroup.querySelector('[name="elementName"]').value = element.name;
+            lastGroup.querySelector('[name="quantity"]').value = element.quantity;
+            lastGroup.querySelector('[name="price"]').value = element.price;
+        });
+
+        // 修改表单标题和按钮文字
+        form.closest('.form-section').querySelector('h2').textContent = '✨ 编辑菜品';
+        form.querySelector('button[type="submit"]').textContent = '💾 保存修改';
+
+        // 添加隐藏字段存储当前编辑ID
+        let idInput = form.querySelector('input[name="edit_id"]');
+        if (!idInput) {
+            idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.name = 'edit_id';
+            form.prepend(idInput);
+        }
+        idInput.value = id;
+
+        // 滚动到表单位置
+        form.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 修改表单提交处理
+    document.getElementById('addForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const elements = [];
+
+        document.querySelectorAll('#elements .element-item').forEach(el => {
+            elements.push({
+                name: el.querySelector('[name="elementName"]').value,
+                quantity: el.querySelector('[name="quantity"]').value,
+                price: el.querySelector('[name="price"]').value
+            });
+        });
+
+        const isEdit = formData.has('edit_id');
+        const url = isEdit ? `/dishes/${formData.get('edit_id')}` : '/dishes';
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: formData.get('name'),
+                image_url: formData.get('image_url'),
+                elements: elements
+            })
+        });
+
+        if (response.ok) {
+            showSuccess(isEdit ? '菜品更新成功！' : '菜品添加成功！');
+            window.location.href = '/?_=' + new Date().getTime();
+            // 重置表单状态
+            form.closest('.form-section').querySelector('h2').textContent = '✨ 添加新菜品';
+            form.querySelector('button[type="submit"]').textContent = '🚀 提交菜品';
+            form.reset();
+            document.getElementById('elements').innerHTML = '<div class="element-group"></div>';
+            if (form.querySelector('input[name="edit_id"]')) {
+                form.querySelector('input[name="edit_id"]').remove();
+            }
+            // 重新获取最新菜品列表
+            // 强制刷新页面并清除缓存
+            window.location.href = '/';
+            window.location.reload(true);
+            window.location.href = '/?_=' + new Date().getTime();
+        }
+    };
+</script>
+</body>
+</html>

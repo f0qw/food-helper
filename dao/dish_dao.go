@@ -38,3 +38,8 @@ func (dao *DishDAO) GetDishByID(id string) (*models.Dish, error) {
 	err := dao.DB.Preload("Elements").First(&dish, "id = ?", id).Error
 	return &dish, err
 }
+
+// UpdateDish 更新菜品信息
+func (dao *DishDAO) UpdateDish(dish *models.Dish) error {
+	return dao.DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(dish).Error
+}
