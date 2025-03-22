@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>美食管理系统 | Food Helper</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         :root {
             --primary-color: #ff6b6b;
@@ -331,6 +332,79 @@
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
         }
+
+        /* 修改元素项布局，在小屏幕上改为单列 */
+        .element-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        @media (max-width: 768px) {
+            .element-item {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+            
+            /* 调整表单在移动设备上的边距 */
+            .form-section {
+                padding: 1rem;
+                margin-bottom: 2rem;
+            }
+            
+            /* 调整移动设备上的按钮大小 */
+            .btn {
+                padding: 0.7rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            /* 调整标题大小 */
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            /* 优化模态框在移动设备上的显示 */
+            .modal-content {
+                width: 95%;
+                padding: 1rem;
+            }
+            
+            /* 调整移动设备上的表单元素间距 */
+            .form-grid {
+                gap: 0.8rem;
+                margin-bottom: 1rem;
+            }
+            
+            /* 优化操作按钮组在移动设备上的显示 */
+            .action-group {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+            }
+            
+            /* 调整移动设备上的复选框样式 */
+            .custom-checkbox label {
+                padding: 0.4rem 0.8rem;
+                justify-content: center;
+            }
+        }
+        
+        /* 进一步优化超小屏幕的显示 */
+        @media (max-width: 480px) {
+            .form-input {
+                padding: 0.6rem;
+                font-size: 0.9rem;
+            }
+            
+            .dish-image {
+                height: 180px;
+            }
+            
+            .dish-content {
+                padding: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -451,13 +525,16 @@
         const itemDiv = document.createElement('div');
         itemDiv.className = 'element-item';
 
+        // 添加适配移动设备的样式
+        const isMobile = window.innerWidth <= 768;
+        
         itemDiv.innerHTML = `
         <input type="text" class="form-input" name="elementName" placeholder="食材名称" required>
         <input type="text" class="form-input" name="quantity" placeholder="分量" required>
         <input type="text" class="form-input" name="price" placeholder="价格" required>
         <button type="button" class="btn btn-danger"
                 onclick="this.parentElement.parentElement.remove()"
-                title="删除食材">
+                title="删除食材" style="${isMobile ? 'margin-top:5px;' : ''}">
             ×
         </button>
     `;
@@ -527,21 +604,23 @@
     // 显示订单模态框
     function showOrderResult(order) {
         const orderContent = document.getElementById('orderContent');
+        const isMobile = window.innerWidth <= 768;
+        
         orderContent.innerHTML = `
-            <div class="order-container">
+            <div class="order-container ${isMobile ? 'mobile-view' : ''}">
                 <div class="order-header">
-                    <h1>🍱 订单详情</h1>
+                    <h1 style="${isMobile ? 'font-size: 1.5rem;' : ''}">🍱 订单详情</h1>
                     <div class="total-price">
                         总计：¥${order.total_price.toFixed(2)}
                     </div>
                 </div>
                 <div class="ingredient-detail">
-                    <h3>📦 食材明细</h3>
+                    <h3 style="${isMobile ? 'font-size: 1.2rem;' : ''}">📦 食材明细</h3>
                     <div class="ingredient-list">
                         ${order.details.map(item => `
                             <div class="ingredient-item">
                                 <span class="ingredient-name">${item.ingredient}</span>
-                                <span class="ingredient-values">
+                                <span class="ingredient-values" style="${isMobile ? 'font-size: 0.9rem;' : ''}">
                                     数量：${item.quantity.toFixed(2)}
                                     | 价格：¥${item.price.toFixed(2)}
                                 </span>
@@ -654,6 +733,24 @@
             window.location.href = '/?_=' + new Date().getTime();
         }
     };
+
+    // 添加移动设备检测与优化
+    function checkMobileOptimizations() {
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) {
+            // 优化移动设备上的菜品卡片
+            document.querySelectorAll('.dish-card').forEach(card => {
+                card.style.marginBottom = '1.5rem';
+            });
+            
+            // 优化订单模态框在移动设备上的显示
+            document.querySelector('.order-container')?.classList.add('mobile-view');
+        }
+    }
+    
+    // 添加窗口大小变化监听
+    window.addEventListener('resize', checkMobileOptimizations);
+    window.addEventListener('load', checkMobileOptimizations);
 </script>
 </body>
 </html>
