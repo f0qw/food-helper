@@ -340,70 +340,115 @@
             gap: 1rem;
             align-items: center;
         }
-        
+
         @media (max-width: 768px) {
             .element-item {
                 grid-template-columns: 1fr;
                 gap: 0.5rem;
             }
-            
+
             /* 调整表单在移动设备上的边距 */
             .form-section {
                 padding: 1rem;
                 margin-bottom: 2rem;
             }
-            
+
             /* 调整移动设备上的按钮大小 */
             .btn {
                 padding: 0.7rem 1rem;
                 font-size: 0.9rem;
             }
-            
+
             /* 调整标题大小 */
             .header h1 {
                 font-size: 1.8rem;
             }
-            
+
             /* 优化模态框在移动设备上的显示 */
             .modal-content {
                 width: 95%;
                 padding: 1rem;
             }
-            
+
             /* 调整移动设备上的表单元素间距 */
             .form-grid {
                 gap: 0.8rem;
                 margin-bottom: 1rem;
             }
-            
+
             /* 优化操作按钮组在移动设备上的显示 */
             .action-group {
                 flex-direction: column;
                 align-items: stretch;
                 gap: 0.5rem;
             }
-            
+
             /* 调整移动设备上的复选框样式 */
             .custom-checkbox label {
                 padding: 0.4rem 0.8rem;
                 justify-content: center;
             }
         }
-        
+
         /* 进一步优化超小屏幕的显示 */
         @media (max-width: 480px) {
             .form-input {
                 padding: 0.6rem;
                 font-size: 0.9rem;
             }
-            
+
             .dish-image {
                 height: 180px;
             }
-            
+
             .dish-content {
                 padding: 1rem;
             }
+        }
+
+        /* 错误提示样式 */
+        .error-message {
+            color: red;
+            background: #ffebee;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        /* 成功提示样式 */
+        .success-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem;
+            background: #4CAF50;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 9999;
+        }
+
+        /* 错误提示样式 */
+        .error-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem;
+            background: #F44336;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 9999;
+        }
+
+        /* 无数据提示 */
+        .no-dishes {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
     </style>
 </head>
@@ -428,7 +473,7 @@
                         <input type="text" class="form-input" name="elementName" placeholder="食材名称" required>
                         <input type="text" class="form-input" name="quantity" placeholder="分量" required>
                         <input type="text" class="form-input" name="price" placeholder="价格" required>
-                        <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">×</button>
+                        <button type="button" class="btn btn-danger" onclick="removeElement(this)">×</button>
                     </div>
                 </div>
             </div>
@@ -457,67 +502,51 @@
         <div id="orderContent"></div>
     </div>
 </div>
+
 <script>
-    // 保持原有JavaScript功能不变，仅调整交互提示样式
-    // 在成功提示处添加emoji和样式
-    const showSuccess = (msg) => {
+    // 基础工具函数
+    function escapeHTML(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function escapeJS(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"')
+            .replace(/'/g, "\\'")
+            .replace(/`/g, "\\`");
+    }
+
+    // 显示成功/错误提示
+    function showSuccess(msg) {
         const toast = document.createElement('div');
-        toast.style = `position: fixed; top: 20px; right: 20px; padding: 1rem; background: #4CAF50; color: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);`;
+        toast.className = 'success-toast';
         toast.innerHTML = `✅ ${msg}`;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
     }
 
-    // 修改原有alert调用为showSuccess
-    document.getElementById('addForm').onsubmit = async (e) => {
-        // ...原有逻辑...
-        if (response.ok) {
-            showSuccess('菜品添加成功！');
-            window.location.reload();
-        }
+    function showError(msg) {
+        const toast = document.createElement('div');
+        toast.className = 'error-toast';
+        toast.innerHTML = `❌ ${msg}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
     }
 
-    // 页面加载时获取菜品列表
-    window.onload = async () => {
-        const response = await fetch('/dishes');
-        const { data } = await response.json();
-        renderDishes(data);
-    };
-
-    // 渲染菜品列表 - 横向三列布局
-    function renderDishes(dishes) {
-        const container = document.getElementById('dishList');
-        container.innerHTML = `
-      <div class="dish-grid">
-        ${dishes.map(dish => `
-          <div class="dish-card" data-id="${dish.id}" data-name="${dish.name}" data-image="${dish.image_url}">
-            ${dish.image_url ? `<img src="${dish.image_url}" class="dish-image" alt="${dish.name}">` : ''}
-            <div class="dish-content">
-              <h3 class="dish-title">${dish.name}</h3>
-              <ul class="ingredient-list">
-                ${dish.elements.map(element => `
-                  <li class="ingredient-item">
-                    <span>${element.name}</span>
-                    <span>${element.quantity} (${element.price})</span>
-                  </li>
-                `).join('')}
-              </ul>
-              <div class="action-group">
-                <button class="btn btn-secondary" onclick="editDish('${dish.id}')">✏️ 编辑</button>
-                <button class="btn btn-danger" onclick="deleteDish('${dish.id}')">🗑️ 删除</button>
-                <div class="custom-checkbox">
-                  <input type="checkbox" class="order-check" value="${dish.id}" id="check-${dish.id}">
-                  <label for="check-${dish.id}">📝 下单</label>
-                </div>
-              </div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `;
+    // 移除食材元素
+    function removeElement(btn) {
+        btn.parentElement.parentElement.remove();
     }
 
-    // 添加食材输入框 - 美化版
+    // 添加食材输入框
     function addElement() {
         const groupDiv = document.createElement('div');
         groupDiv.className = 'element-group';
@@ -527,110 +556,268 @@
 
         // 添加适配移动设备的样式
         const isMobile = window.innerWidth <= 768;
-        
-        itemDiv.innerHTML = `
-        <input type="text" class="form-input" name="elementName" placeholder="食材名称" required>
-        <input type="text" class="form-input" name="quantity" placeholder="分量" required>
-        <input type="text" class="form-input" name="price" placeholder="价格" required>
-        <button type="button" class="btn btn-danger"
-                onclick="this.parentElement.parentElement.remove()"
-                title="删除食材" style="${isMobile ? 'margin-top:5px;' : ''}">
-            ×
-        </button>
-    `;
+        const marginStyle = isMobile ? 'margin-top:5px;' : '';
+
+        itemDiv.innerHTML =
+            '<input type="text" class="form-input" name="elementName" placeholder="食材名称" required>' +
+            '<input type="text" class="form-input" name="quantity" placeholder="分量" required>' +
+            '<input type="text" class="form-input" name="price" placeholder="价格" required>' +
+            '<button type="button" class="btn btn-danger" onclick="removeElement(this)" ' +
+            'title="删除食材" style="' + marginStyle + '">×</button>';
 
         groupDiv.appendChild(itemDiv);
         document.getElementById('elements').appendChild(groupDiv);
     }
-    // 提交新菜品
-    document.getElementById('addForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const elements = [];
 
-        document.querySelectorAll('#elements .element').forEach(el => {
-            elements.push({
-                name: el.querySelector('[name="elementName"]').value,
-                quantity: el.querySelector('[name="quantity"]').value,
-                price: el.querySelector('[name="price"]').value
-            });
-        });
+    // 渲染菜品列表
+    function renderDishes(dishes) {
+        const container = document.getElementById('dishList');
 
-        const response = await fetch('/dishes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: formData.get('name'),
-                image_url: formData.get('image_url'),
-                elements: elements
-            })
-        });
-
-        if (response.ok) {
-            alert('添加成功');
-            window.location.reload();
+        if (!Array.isArray(dishes) || dishes.length === 0) {
+            container.innerHTML = '<div class="no-dishes"><h3>暂无菜品数据</h3><p>请添加新菜品</p></div>';
+            return;
         }
-    };
+
+        // 添加Grid容器包裹
+        container.innerHTML = '<div class="dish-grid"></div>';
+        const dishGrid = container.querySelector('.dish-grid');
+
+        let htmlContent = '';
+
+        for (let i = 0; i < dishes.length; i++) {
+            const dish = dishes[i];
+            const id = escapeHTML(dish.id || '');
+            const name = escapeHTML(dish.name || '未命名菜品');
+            const image_url = escapeHTML(dish.image_url || '');
+            const elements = dish.elements || [];
+
+            let elementsHTML = '';
+            for (let j = 0; j < elements.length; j++) {
+                const element = elements[j];
+                elementsHTML +=
+                    '<li class="ingredient-item">' +
+                    '<span>' + escapeHTML(element.name || '') + '</span>' +
+                    '<span>' + escapeHTML(element.quantity || '') + ' (' + escapeHTML(element.price || '') + ')</span>' +
+                    '</li>';
+            }
+
+            const imageHTML = image_url ?
+                '<img src="' + image_url + '" class="dish-image" alt="' + name + '">' : '';
+
+            htmlContent +=
+                '<div class="dish-card" data-id="' + id + '" data-name="' + name + '" data-image="' + image_url + '">' +
+                imageHTML +
+                '<div class="dish-content">' +
+                '<h3 class="dish-title">' + name + '</h3>' +
+                '<ul class="ingredient-list">' + elementsHTML + '</ul>' +
+                '<div class="action-group">' +
+                '<div class="custom-checkbox">' +
+                '<input type="checkbox" id="check-' + id + '" class="order-check" value="' + id + '">' +
+                '<label for="check-' + id + '">选择</label>' +
+                '</div>' +
+                '<button class="btn btn-secondary" onclick="editDish(\'' + escapeJS(id) + '\')">✏️ 编辑</button>' +
+                '<button class="btn btn-danger" onclick="deleteDish(\'' + escapeJS(id) + '\')">🗑️ 删除</button>' +
+                '</div>' +
+                '</div>' +
+                '</div>';
+        }
+
+        dishGrid.innerHTML = htmlContent;
+    }
 
     // 删除菜品
     async function deleteDish(id) {
         if (confirm('确定要删除吗？')) {
-            await fetch(`/dishes/${id}`, { method: 'DELETE' });
-            window.location.reload();
+            try {
+                const response = await fetch('/dishes/' + id, { method: 'DELETE' });
+                if (response.ok) {
+                    showSuccess('菜品已删除');
+                    window.location.reload();
+                } else {
+                    const error = await response.json();
+                    showError('删除失败: ' + (error.message || '未知错误'));
+                }
+            } catch (error) {
+                showError('请求错误: ' + error.message);
+                console.error('删除菜品错误:', error);
+            }
+        }
+    }
+
+    // 编辑菜品功能
+    function editDish(id) {
+        try {
+            // 从已加载的列表数据中获取菜品详情
+            const dishCard = document.querySelector('.dish-card[data-id="' + id + '"]');
+            if (!dishCard) {
+                showError('无法找到菜品数据');
+                return;
+            }
+
+            // 获取菜品名称和图片
+            const name = dishCard.querySelector('.dish-title').textContent;
+            let imageUrl = '';
+            const imageElement = dishCard.querySelector('.dish-image');
+            if (imageElement) {
+                imageUrl = imageElement.src;
+            }
+
+            // 获取食材信息
+            const elements = [];
+            const ingredientItems = dishCard.querySelectorAll('.ingredient-item');
+
+            ingredientItems.forEach(function(item) {
+                const nameSpan = item.querySelector('span:first-child');
+                const valueSpan = item.querySelector('span:last-child');
+
+                if (!nameSpan || !valueSpan) return;
+
+                const name = nameSpan.textContent;
+                const valueText = valueSpan.textContent;
+
+                // 提取数量和价格
+                let quantity = '';
+                let price = '';
+
+                const parts = valueText.split('(');
+                if (parts.length >= 2) {
+                    quantity = parts[0].trim();
+                    price = parts[1].replace(')', '').trim();
+                }
+
+                elements.push({
+                    name: name,
+                    quantity: quantity,
+                    price: price
+                });
+            });
+
+            // 填充表单数据
+            const form = document.getElementById('addForm');
+            form.querySelector('[name="name"]').value = name;
+            form.querySelector('[name="image_url"]').value = imageUrl;
+
+            // 清空现有食材输入
+            document.getElementById('elements').innerHTML = '';
+
+            // 填充食材信息
+            elements.forEach(function(element) {
+                addElement(); // 添加新输入框
+                const lastGroup = document.querySelector('#elements .element-group:last-child');
+                lastGroup.querySelector('[name="elementName"]').value = element.name;
+                lastGroup.querySelector('[name="quantity"]').value = element.quantity;
+                lastGroup.querySelector('[name="price"]').value = element.price;
+            });
+
+            // 修改表单标题和按钮文字
+            const titleElement = form.closest('.form-section').querySelector('h2');
+            if (titleElement) {
+                titleElement.textContent = '✨ 编辑菜品';
+            }
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.textContent = '💾 保存修改';
+            }
+
+            // 添加隐藏字段存储当前编辑ID
+            let idInput = form.querySelector('input[name="edit_id"]');
+            if (!idInput) {
+                idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'edit_id';
+                form.prepend(idInput);
+            }
+            idInput.value = id;
+
+            // 滚动到表单位置
+            form.scrollIntoView({ behavior: 'smooth' });
+        } catch (error) {
+            showError('编辑操作错误: ' + error.message);
+            console.error('编辑菜品错误:', error);
         }
     }
 
     // 下单功能
-    // 修改原有placeOrder函数（保持其他函数不变）
     async function placeOrder() {
-        const selected = Array.from(document.querySelectorAll('.order-check:checked'))
-            .map(checkbox => checkbox.value);
+        const checkboxes = document.querySelectorAll('.order-check:checked');
+        const selected = [];
+
+        checkboxes.forEach(function(checkbox) {
+            selected.push(checkbox.value);
+        });
 
         if (selected.length === 0) {
-            alert('请选择要下单的菜品');
+            showError('请选择要下单的菜品');
             return;
         }
 
-        const response = await fetch('/dishes/order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ dish_ids: selected })
-        });
+        try {
+            const response = await fetch('/dishes/order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dish_ids: selected })
+            });
 
-        const { data } = await response.json();
-        showOrderResult(data);
+            if (!response.ok) {
+                throw new Error('HTTP error! status: ' + response.status);
+            }
+
+            const result = await response.json();
+            if (result.code === 200) {
+                showOrderResult(result.data);
+            } else {
+                showError('下单失败: ' + (result.message || '未知错误'));
+            }
+        } catch (error) {
+            showError('下单请求错误: ' + error.message);
+            console.error('下单错误:', error);
+        }
     }
 
     // 显示订单模态框
     function showOrderResult(order) {
-        const orderContent = document.getElementById('orderContent');
-        const isMobile = window.innerWidth <= 768;
-        
-        orderContent.innerHTML = `
-            <div class="order-container ${isMobile ? 'mobile-view' : ''}">
-                <div class="order-header">
-                    <h1 style="${isMobile ? 'font-size: 1.5rem;' : ''}">🍱 订单详情</h1>
-                    <div class="total-price">
-                        总计：¥${order.total_price.toFixed(2)}
-                    </div>
-                </div>
-                <div class="ingredient-detail">
-                    <h3 style="${isMobile ? 'font-size: 1.2rem;' : ''}">📦 食材明细</h3>
-                    <div class="ingredient-list">
-                        ${order.details.map(item => `
-                            <div class="ingredient-item">
-                                <span class="ingredient-name">${item.ingredient}</span>
-                                <span class="ingredient-values" style="${isMobile ? 'font-size: 0.9rem;' : ''}">
-                                    数量：${item.quantity.toFixed(2)}
-                                    | 价格：¥${item.price.toFixed(2)}
-                                </span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            </div>
-        `;
-        document.getElementById('orderModal').style.display = 'flex';
+        try {
+            const orderContent = document.getElementById('orderContent');
+            const isMobile = window.innerWidth <= 768;
+
+            let detailsHTML = '';
+
+            if (order.details && Array.isArray(order.details)) {
+                order.details.forEach(function(item) {
+                    detailsHTML +=
+                        '<div class="ingredient-item">' +
+                        '<span class="ingredient-name">' + escapeHTML(item.ingredient) + '</span>' +
+                        '<span class="ingredient-values" style="' + (isMobile ? 'font-size: 0.9rem;' : '') + '">' +
+                        '数量：' + (item.quantity ? item.quantity.toFixed(2) : '0.00') +
+                        ' | 价格：¥' + (item.price ? item.price.toFixed(2) : '0.00') +
+                        '</span>' +
+                        '</div>';
+                });
+            }
+
+            const totalPrice = order.total_price ? order.total_price.toFixed(2) : '0.00';
+
+            let modalHTML =
+                '<div class="order-container ' + (isMobile ? 'mobile-view' : '') + '">' +
+                '<div class="order-header">' +
+                '<h1 style="' + (isMobile ? 'font-size: 1.5rem;' : '') + '">🍱 订单详情</h1>' +
+                '<div class="total-price">' +
+                '总计：¥' + totalPrice +
+                '</div>' +
+                '</div>' +
+                '<div class="ingredient-detail">' +
+                '<h3 style="' + (isMobile ? 'font-size: 1.2rem;' : '') + '">📦 食材明细</h3>' +
+                '<div class="ingredient-list">' + detailsHTML + '</div>' +
+                '</div>' +
+                '</div>';
+
+            orderContent.innerHTML = modalHTML;
+            document.getElementById('orderModal').style.display = 'flex';
+        } catch (error) {
+            showError('显示订单详情错误: ' + error.message);
+            console.error('显示订单详情错误:', error);
+        }
     }
 
     // 关闭订单模态框
@@ -638,119 +825,112 @@
         document.getElementById('orderModal').style.display = 'none';
     }
 
-    // 编辑菜品功能
-    async function editDish(id) {
-        // 从已加载的列表数据中获取菜品详情
-        const dishCard = document.querySelector(`.dish-card[data-id="${id}"]`);
-        const data = {
-            name: dishCard.querySelector('.dish-title').textContent,
-            image_url: dishCard.querySelector('.dish-image')?.src || '',
-            elements: Array.from(dishCard.querySelectorAll('.ingredient-item')).map(item => ({
-                name: item.querySelector('span:first-child').textContent,
-                quantity: item.querySelector('span:last-child').textContent.split(' ')[0],
-                price: item.querySelector('span:last-child').textContent.match(/\((.*?)\)/)[1]
-            }))
-        };
-
-        // 填充表单数据
-        const form = document.getElementById('addForm');
-        form.querySelector('[name="name"]').value = data.name;
-        form.querySelector('[name="image_url"]').value = data.image_url;
-
-        // 清空现有食材输入
-        document.getElementById('elements').innerHTML = '';
-
-        // 填充食材信息
-        data.elements.forEach(element => {
-            addElement(); // 添加新输入框
-            const lastGroup = document.querySelector('#elements .element-group:last-child');
-            lastGroup.querySelector('[name="elementName"]').value = element.name;
-            lastGroup.querySelector('[name="quantity"]').value = element.quantity;
-            lastGroup.querySelector('[name="price"]').value = element.price;
-        });
-
-        // 修改表单标题和按钮文字
-        form.closest('.form-section').querySelector('h2').textContent = '✨ 编辑菜品';
-        form.querySelector('button[type="submit"]').textContent = '💾 保存修改';
-
-        // 添加隐藏字段存储当前编辑ID
-        let idInput = form.querySelector('input[name="edit_id"]');
-        if (!idInput) {
-            idInput = document.createElement('input');
-            idInput.type = 'hidden';
-            idInput.name = 'edit_id';
-            form.prepend(idInput);
-        }
-        idInput.value = id;
-
-        // 滚动到表单位置
-        form.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    // 修改表单提交处理
-    document.getElementById('addForm').onsubmit = async (e) => {
+    // 提交表单处理
+    document.getElementById('addForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        const formData = new FormData(e.target);
-        const elements = [];
 
-        document.querySelectorAll('#elements .element-item').forEach(el => {
-            elements.push({
-                name: el.querySelector('[name="elementName"]').value,
-                quantity: el.querySelector('[name="quantity"]').value,
-                price: el.querySelector('[name="price"]').value
+        try {
+            const form = e.target;
+            const formData = new FormData(form);
+            const elements = [];
+
+            // 获取食材信息
+            const elementItems = document.querySelectorAll('#elements .element-item');
+
+            elementItems.forEach(function(el) {
+                const nameInput = el.querySelector('[name="elementName"]');
+                const quantityInput = el.querySelector('[name="quantity"]');
+                const priceInput = el.querySelector('[name="price"]');
+
+                if (nameInput && quantityInput && priceInput) {
+                    elements.push({
+                        name: nameInput.value,
+                        quantity: quantityInput.value,
+                        price: priceInput.value
+                    });
+                }
             });
-        });
 
-        const isEdit = formData.has('edit_id');
-        const url = isEdit ? `/dishes/${formData.get('edit_id')}` : '/dishes';
-        const method = isEdit ? 'PUT' : 'POST';
+            const isEdit = formData.has('edit_id');
+            const id = formData.get('edit_id');
+            const url = isEdit ? ('/dishes/' + id) : '/dishes';
+            const method = isEdit ? 'PUT' : 'POST';
 
-        const response = await fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: formData.get('name'),
-                image_url: formData.get('image_url'),
-                elements: elements
-            })
-        });
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: formData.get('name'),
+                    image_url: formData.get('image_url'),
+                    elements: elements
+                })
+            });
 
-        if (response.ok) {
-            showSuccess(isEdit ? '菜品更新成功！' : '菜品添加成功！');
-            window.location.href = '/?_=' + new Date().getTime();
-            // 重置表单状态
-            form.closest('.form-section').querySelector('h2').textContent = '✨ 添加新菜品';
-            form.querySelector('button[type="submit"]').textContent = '🚀 提交菜品';
-            form.reset();
-            document.getElementById('elements').innerHTML = '<div class="element-group"></div>';
-            if (form.querySelector('input[name="edit_id"]')) {
-                form.querySelector('input[name="edit_id"]').remove();
+            if (response.ok) {
+                showSuccess(isEdit ? '菜品更新成功！' : '菜品添加成功！');
+                window.location.reload();
+            } else {
+                const error = await response.json();
+                showError('操作失败: ' + (error.message || '未知错误'));
             }
-            // 重新获取最新菜品列表
-            // 强制刷新页面并清除缓存
-            window.location.href = '/';
-            window.location.reload(true);
-            window.location.href = '/?_=' + new Date().getTime();
+        } catch (error) {
+            showError('请求错误: ' + error.message);
+            console.error('提交菜品错误:', error);
         }
-    };
+    });
 
-    // 添加移动设备检测与优化
+    // 检测移动设备并应用优化
     function checkMobileOptimizations() {
         const isMobile = window.innerWidth <= 768;
         if (isMobile) {
             // 优化移动设备上的菜品卡片
-            document.querySelectorAll('.dish-card').forEach(card => {
-                card.style.marginBottom = '1.5rem';
-            });
-            
+            const cards = document.querySelectorAll('.dish-card');
+            for (let i = 0; i < cards.length; i++) {
+                cards[i].style.marginBottom = '1.5rem';
+            }
+
             // 优化订单模态框在移动设备上的显示
-            document.querySelector('.order-container')?.classList.add('mobile-view');
+            const container = document.querySelector('.order-container');
+            if (container) {
+                container.classList.add('mobile-view');
+            }
         }
     }
-    
+
     // 添加窗口大小变化监听
     window.addEventListener('resize', checkMobileOptimizations);
     window.addEventListener('load', checkMobileOptimizations);
+
+    // 页面加载时获取菜品列表
+    window.addEventListener('load', async function() {
+        try {
+            const response = await fetch('/dishes');
+            if (!response.ok) {
+                throw new Error('HTTP error! status: ' + response.status);
+            }
+
+            const result = await response.json();
+            console.log('API返回数据:', result);
+
+            if (result.code === 200) {
+                // 标准API响应格式
+                renderDishes(result.data);
+            } else if (Array.isArray(result)) {
+                // 直接返回数组的情况
+                renderDishes(result);
+            } else {
+                // 其他未知情况
+                console.error('未知数据格式:', result);
+                throw new Error('API返回的数据格式不正确');
+            }
+        } catch (error) {
+            console.error('加载菜品失败:', error);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = '<strong>加载失败</strong><p>' + (error.message || '未知错误') + '</p>';
+            document.getElementById('dishList').prepend(errorDiv);
+        }
+    });
 </script>
 </body>
 </html>
